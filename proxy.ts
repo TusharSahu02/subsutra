@@ -13,7 +13,7 @@ export default auth((req) => {
     return NextResponse.redirect(new URL("/login", req.nextUrl))
   }
 
-  if (isPublic && req.auth && pathname === "/login") {
+  if (isPublic && req.auth && (pathname === "/login" || pathname === "/")) {
     return NextResponse.redirect(new URL("/dashboard", req.nextUrl))
   }
 

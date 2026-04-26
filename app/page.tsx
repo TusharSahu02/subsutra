@@ -362,8 +362,12 @@ export default function LandingPage() {
           <span className="font-semibold text-sm tracking-tight" style={{ color: "#eee" }}>SubSutra</span>
         </div>
         <div className="hidden md:flex items-center gap-6 text-sm" style={{ color: "#777" }}>
-          {["Features", "Pricing", "Changelog"].map(l => (
-            <a key={l} href={`#${l.toLowerCase()}`} className="hover:text-white transition-colors">{l}</a>
+          {[
+            { label: "Features", href: "#features" },
+            { label: "Pricing", href: "#pricing" },
+            { label: "Changelog", href: "/changelog" },
+          ].map(l => (
+            <a key={l.label} href={l.href} className="hover:text-white transition-colors">{l.label}</a>
           ))}
         </div>
         <Link
