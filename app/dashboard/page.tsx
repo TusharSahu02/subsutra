@@ -2,12 +2,11 @@ import { auth } from "@/lib/auth"
 import { redirect } from "next/navigation"
 import { AppSidebar } from "@/components/app-sidebar"
 import { ChartAreaInteractive } from "@/components/chart-area-interactive"
-import { DataTable } from "@/components/data-table"
+import { PostsTable } from "@/components/posts-table"
 import { SectionCards } from "@/components/section-cards"
 import { SiteHeader } from "@/components/site-header"
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
-
-import data from "./data.json"
+import { getDashboardData } from "@/lib/substack"
 
 export default async function Page() {
   const session = await auth()
@@ -18,6 +17,8 @@ export default async function Page() {
     email: session.user.email ?? "",
     avatar: session.user.image ?? "",
   }
+
+  const dashboard = await getDashboardData()
 
   return (
     <SidebarProvider
@@ -34,11 +35,11 @@ export default async function Page() {
         <div className="flex flex-1 flex-col">
           <div className="@container/main flex flex-1 flex-col gap-2">
             <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
-              <SectionCards />
+              <SectionCards stats={dashboard.stats} topPost={dashboard.stats.topPost} />
               <div className="px-4 lg:px-6">
-                <ChartAreaInteractive />
+                <ChartAreaInteractive posts={dashboard.posts} />
               </div>
-              <DataTable data={data} />
+              <PostsTable posts={dashboard.posts} />
             </div>
           </div>
         </div>

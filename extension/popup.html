@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { width: 280px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; padding: 16px; background: #0a0a0a; color: #e5e5e5; }
+    h1 { font-size: 16px; margin-bottom: 14px; color: #fff; }
+    .pub { font-size: 13px; color: #a5a5a5; margin-bottom: 4px; }
+    .pub strong { color: #fff; }
+    .meta { font-size: 11px; color: #666; margin-bottom: 14px; }
+    button { width: 100%; padding: 10px; border: none; border-radius: 6px; font-size: 14px; font-weight: 600; cursor: pointer; background: #6366f1; color: #fff; }
+    button:hover { background: #4f46e5; }
+    button:disabled { background: #333; color: #666; cursor: not-allowed; }
+    #status { margin-top: 12px; font-size: 11px; min-height: 16px; word-break: break-all; max-height: 80px; overflow-y: auto; }
+    .ok { color: #22c55e; } .err { color: #ef4444; } .info { color: #999; }
+    .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; }
+    .dot.green { background: #22c55e; } .dot.red { background: #ef4444; } .dot.yellow { background: #eab308; }
+  </style>
+</head>
+<body>
+  <h1>🔮 SubSutra</h1>
+  <div id="pub" class="pub">Checking connection…</div>
+  <div id="meta" class="meta"></div>
+  <button id="relay" disabled>Sync Cookies Now</button>
+  <div id="status" class="info"></div>
+  <script src="popup.js"></script>
+</body>
+</html>

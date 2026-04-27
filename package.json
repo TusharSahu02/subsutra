@@ -8,7 +8,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "postinstall": "prisma generate"
+    "postinstall": "prisma generate",
+    "spike:substack": "node scripts/substack-spike.mjs"
   },
   "dependencies": {
     "@base-ui/react": "^1.4.1",

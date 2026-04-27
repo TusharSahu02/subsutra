@@ -34,9 +34,12 @@ model SubstackConnection {
   publicationName   String?
   authorName        String?
 
-  // Encrypted session token — never store raw password
-  encryptedToken    String
-  tokenExpiresAt    DateTime?
+  substackHandle    String?
+  substackUserId    String?
+
+  // Encrypted cookie string from Chrome extension
+  encryptedCookies  String
+  cookiesValid      Boolean   @default(true)
 
   hasPaidTier       Boolean   @default(false)
 

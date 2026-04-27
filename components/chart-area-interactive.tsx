@@ -29,52 +29,64 @@ import {
   ToggleGroup,
   ToggleGroupItem,
 } from "@/components/ui/toggle-group"
+import type { SubstackPost } from "@/lib/substack"
 
-const chartData = [
-  { date: "2024-04-01", subscribers: 3800, paid: 210 },
-  { date: "2024-04-08", subscribers: 3860, paid: 215 },
-  { date: "2024-04-15", subscribers: 3910, paid: 220 },
-  { date: "2024-04-22", subscribers: 4050, paid: 228 },
-  { date: "2024-04-29", subscribers: 4120, paid: 235 },
-  { date: "2024-05-06", subscribers: 4180, paid: 241 },
-  { date: "2024-05-13", subscribers: 4310, paid: 250 },
-  { date: "2024-05-20", subscribers: 4290, paid: 252 },
-  { date: "2024-05-27", subscribers: 4380, paid: 260 },
-  { date: "2024-06-03", subscribers: 4440, paid: 268 },
-  { date: "2024-06-10", subscribers: 4510, paid: 275 },
-  { date: "2024-06-17", subscribers: 4620, paid: 283 },
-  { date: "2024-06-24", subscribers: 4700, paid: 290 },
-  { date: "2024-07-01", subscribers: 4760, paid: 298 },
-  { date: "2024-07-08", subscribers: 4821, paid: 305 },
-]
+interface ChartPoint {
+  date: string
+  reactions: number
+  restacks: number
+}
+
+function buildChartData(posts: SubstackPost[]): ChartPoint[] {
+  return [...posts]
+    .filter((p) => p.is_published)
+    .sort((a, b) => new Date(a.post_date).getTime() - new Date(b.post_date).getTime())
+    .map((p) => ({
+      date: p.post_date.slice(0, 10),
+      reactions: Object.values(p.reactions ?? {}).reduce((s, v) => s + v, 0),
+      restacks: p.restacks ?? 0,
+    }))
+}
 
 const chartConfig = {
-  subscribers: {
-    label: "Free Subscribers",
+  reactions: {
+    label: "Reactions",
     color: "var(--accent-orange)",
   },
-  paid: {
-    label: "Paid Subscribers",
+  restacks: {
+    label: "Restacks",
     color: "#ffffff",
   },
 } satisfies ChartConfig
 
-export function ChartAreaInteractive() {
+interface Props {
+  posts: SubstackPost[]
+}
+
+export function ChartAreaInteractive({ posts }: Props) {
   const isMobile = useIsMobile()
-  const [timeRange, setTimeRange] = React.useState("90d")
+  const [timeRange, setTimeRange] = React.useState("all")
 
   React.useEffect(() => {
-    if (isMobile) setTimeRange("30d")
+    if (isMobile) setTimeRange("90d")
   }, [isMobile])
 
-  const filteredData = chartData.filter((item) => {
-    const date = new Date(item.date)
-    const refDate = new Date("2024-07-08")
-    const days = timeRange === "30d" ? 30 : timeRange === "7d" ? 7 : 90
-    const start = new Date(refDate)
-    start.setDate(start.getDate() - days)
-    return date >= start
-  })
+  const allData = React.useMemo(() => buildChartData(posts), [posts])
+
+  const filteredData = React.useMemo(() => {
+    if (timeRange === "all" || allData.length === 0) return allData
+    const days = timeRange === "30d" ? 30 : timeRange === "90d" ? 90 : 365
+    const cutoff = Date.now() - days * 24 * 60 * 60 * 1000
+    return allData.filter((d) => new Date(d.date).getTime() >= cutoff)
+  }, [allData, timeRange])
+
+  const ranges = ["all", "365d", "90d", "30d"] as const
+  const rangeLabel: Record<string, string> = {
+    all: "All time",
+    "365d": "1 year",
+    "90d": "3 months",
+    "30d": "30 days",
+  }
 
   return (
     <Card
@@ -87,22 +99,24 @@ export function ChartAreaInteractive() {
             className="text-sm font-semibold"
             style={{ color: "var(--text-primary)" }}
           >
-            Subscriber Growth
+            Post Engagement
           </CardTitle>
-          <CardDescription style={{ color: "var(--text-secondary)", fontSize: "var(--font-size-xs)" }}>
-            Free and paid subscribers over time
+          <CardDescription
+            style={{ color: "var(--text-secondary)", fontSize: "var(--font-size-xs)" }}
+          >
+            Reactions and restacks per published post
           </CardDescription>
         </div>
         <CardAction>
           <ToggleGroup
             multiple={false}
             value={timeRange ? [timeRange] : []}
-            onValueChange={(value) => setTimeRange(value[0] ?? "90d")}
+            onValueChange={(value) => setTimeRange(value[0] ?? "all")}
             variant="outline"
             className="hidden *:data-[slot=toggle-group-item]:px-3! *:data-[slot=toggle-group-item]:text-xs @[540px]/card:flex"
             style={{ gap: "4px" }}
           >
-            {["90d", "30d", "7d"].map((v) => (
+            {ranges.map((v) => (
               <ToggleGroupItem
                 key={v}
                 value={v}
@@ -114,7 +128,7 @@ export function ChartAreaInteractive() {
                   backgroundColor: timeRange === v ? "rgba(255,103,25,0.1)" : "transparent",
                 }}
               >
-                {v === "90d" ? "3 months" : v === "30d" ? "30 days" : "7 days"}
+                {rangeLabel[v]}
               </ToggleGroupItem>
             ))}
           </ToggleGroup>
@@ -126,72 +140,92 @@ export function ChartAreaInteractive() {
               className="w-36 text-xs @[540px]/card:hidden"
               size="sm"
               aria-label="Select time range"
-              style={{ borderColor: "var(--border-subtle)", color: "var(--text-secondary)", fontSize: "var(--font-size-xs)" }}
+              style={{
+                borderColor: "var(--border-subtle)",
+                color: "var(--text-secondary)",
+                fontSize: "var(--font-size-xs)",
+              }}
             >
-              <SelectValue placeholder="Last 3 months" />
+              <SelectValue placeholder="All time" />
             </SelectTrigger>
             <SelectContent style={{ backgroundColor: "var(--surface-strong)" }}>
-              <SelectItem value="90d">Last 3 months</SelectItem>
-              <SelectItem value="30d">Last 30 days</SelectItem>
-              <SelectItem value="7d">Last 7 days</SelectItem>
+              {ranges.map((v) => (
+                <SelectItem key={v} value={v}>{rangeLabel[v]}</SelectItem>
+              ))}
             </SelectContent>
           </Select>
         </CardAction>
       </CardHeader>
       <CardContent className="px-2 pt-2 sm:px-4 sm:pt-4">
-        <ChartContainer config={chartConfig} className="aspect-auto h-[220px] w-full">
-          <AreaChart data={filteredData} margin={{ left: 0, right: 0, top: 4, bottom: 0 }}>
-            <defs>
-              <linearGradient id="fillSubs" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="var(--accent-orange)" stopOpacity={0.3} />
-                <stop offset="95%" stopColor="var(--accent-orange)" stopOpacity={0} />
-              </linearGradient>
-              <linearGradient id="fillPaid" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#ffffff" stopOpacity={0.15} />
-                <stop offset="95%" stopColor="#ffffff" stopOpacity={0} />
-              </linearGradient>
-            </defs>
-            <CartesianGrid vertical={false} stroke="var(--border-subtle)" />
-            <XAxis
-              dataKey="date"
-              tickLine={false}
-              axisLine={false}
-              tickMargin={8}
-              minTickGap={40}
-              tick={{ fill: "var(--text-secondary)", fontSize: 11 }}
-              tickFormatter={(v) =>
-                new Date(v).toLocaleDateString("en-US", { month: "short", day: "numeric" })
-              }
-            />
-            <YAxis hide />
-            <ChartTooltip
-              cursor={{ stroke: "var(--border-subtle)", strokeWidth: 1 }}
-              content={
-                <ChartTooltipContent
-                  labelFormatter={(v) =>
-                    new Date(v).toLocaleDateString("en-US", { month: "short", day: "numeric" })
-                  }
-                  indicator="dot"
-                />
-              }
-            />
-            <Area
-              dataKey="subscribers"
-              type="monotone"
-              fill="url(#fillSubs)"
-              stroke="var(--accent-orange)"
-              strokeWidth={2}
-            />
-            <Area
-              dataKey="paid"
-              type="monotone"
-              fill="url(#fillPaid)"
-              stroke="rgba(255,255,255,0.4)"
-              strokeWidth={1.5}
-              strokeDasharray="4 3"
-            />
-          </AreaChart>
-        </ChartContainer>
+        {filteredData.length === 0 ? (
+          <div
+            className="flex h-[220px] items-center justify-center text-sm"
+            style={{ color: "var(--text-secondary)" }}
+          >
+            No published posts in this range
+          </div>
+        ) : (
+          <ChartContainer config={chartConfig} className="aspect-auto h-[220px] w-full">
+            <AreaChart
+              data={filteredData}
+              margin={{ left: 0, right: 0, top: 4, bottom: 0 }}
+            >
+              <defs>
+                <linearGradient id="fillReactions" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="var(--accent-orange)" stopOpacity={0.3} />
+                  <stop offset="95%" stopColor="var(--accent-orange)" stopOpacity={0} />
+                </linearGradient>
+                <linearGradient id="fillRestacks" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#ffffff" stopOpacity={0.15} />
+                  <stop offset="95%" stopColor="#ffffff" stopOpacity={0} />
+                </linearGradient>
+              </defs>
+              <CartesianGrid vertical={false} stroke="var(--border-subtle)" />
+              <XAxis
+                dataKey="date"
+                tickLine={false}
+                axisLine={false}
+                tickMargin={8}
+                minTickGap={40}
+                tick={{ fill: "var(--text-secondary)", fontSize: 11 }}
+                tickFormatter={(v) =>
+                  new Date(v).toLocaleDateString("en-US", { month: "short", day: "numeric" })
+                }
+              />
+              <YAxis hide />
+              <ChartTooltip
+                cursor={{ stroke: "var(--border-subtle)", strokeWidth: 1 }}
+                content={
+                  <ChartTooltipContent
+                    labelFormatter={(v) =>
+                      new Date(v).toLocaleDateString("en-US", {
+                        month: "short",
+                        day: "numeric",
+                        year: "numeric",
+                      })
+                    }
+                    indicator="dot"
+                  />
+                }
+              />
+              <Area
+                dataKey="reactions"
+                type="monotone"
+                fill="url(#fillReactions)"
+                stroke="var(--accent-orange)"
+                strokeWidth={2}
+              />
+              <Area
+                dataKey="restacks"
+                type="monotone"
+                fill="url(#fillRestacks)"
+                stroke="rgba(255,255,255,0.4)"
+                strokeWidth={1.5}
+                strokeDasharray="4 3"
+              />
+            </AreaChart>
+          </ChartContainer>
+        )}
       </CardContent>
     </Card>
   )
