@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { decrypt } from "@/lib/crypto";
 import { fetchPublicationData } from "@/lib/substack";
+import { sendCookieExpiryEmail } from "@/lib/email";
 
 // Protect with a secret so only your cron can call it
 const CRON_SECRET = process.env.CRON_SECRET ?? "dev-cron-secret";
@@ -94,13 +95,20 @@ export async function GET(req: NextRequest) {
     } catch (e) {
       const msg = (e as Error).message;
 
-      // Mark cookies as invalid if expired
       if (msg === "COOKIES_EXPIRED") {
         await prisma.substackConnection.update({
           where: { id: conn.id },
           data: { cookiesValid: false },
         });
-        results.push({ userId: conn.userId, status: "cookies_expired" });
+
+        // Email the user to re-visit Substack
+        if (conn.user.email) {
+          try {
+            await sendCookieExpiryEmail(conn.user.email, conn.user.name);
+          } catch {}
+        }
+
+        results.push({ userId: conn.userId, status: "cookies_expired_emailed" });
       } else {
         results.push({ userId: conn.userId, status: `error: ${msg}` });
       }
