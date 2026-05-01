@@ -2,21 +2,33 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { encrypt } from "@/lib/crypto";
+import { verifyExtensionToken } from "@/lib/extension-token";
 
 const CORS = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type",
+  "Access-Control-Allow-Headers": "Content-Type, Authorization",
 };
 
 export async function OPTIONS() {
   return new NextResponse(null, { status: 204, headers: CORS });
 }
 
-export async function POST(req: NextRequest) {
+async function resolveUserId(req: NextRequest): Promise<string | null> {
+  // 1. Bearer token from extension
+  const authHeader = req.headers.get("authorization");
+  if (authHeader?.startsWith("Bearer ")) {
+    return verifyExtensionToken(authHeader.slice(7));
+  }
+  // 2. Session cookie from website
   const session = await auth();
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "Not logged in" }, { status: 401, headers: CORS });
+  return session?.user?.id ?? null;
+}
+
+export async function POST(req: NextRequest) {
+  const userId = await resolveUserId(req);
+  if (!userId) {
+    return NextResponse.json({ error: "Not authenticated" }, { status: 401, headers: CORS });
   }
 
   const { cookies, pubSlug, pubName, handle } = await req.json();
@@ -25,7 +37,7 @@ export async function POST(req: NextRequest) {
   }
 
   await prisma.substackConnection.upsert({
-    where: { userId: session.user.id },
+    where: { userId },
     update: {
       encryptedCookies: encrypt(cookies),
       cookiesValid: true,
@@ -34,7 +46,7 @@ export async function POST(req: NextRequest) {
       lastSyncedAt: new Date(),
     },
     create: {
-      userId: session.user.id,
+      userId,
       publicationUrl: `https://${pubSlug}.substack.com`,
       publicationName: pubName ?? null,
       substackHandle: handle ?? null,

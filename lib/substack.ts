@@ -110,11 +110,14 @@ export async function getProfile() {
 }
 
 export async function getDashboardData() {
+  const safe = <T,>(p: Promise<T>, fallback: T): Promise<T> =>
+    p.catch(() => fallback);
+
   const [publication, profile, posts, topPosts] = await Promise.all([
-    getPublication(),
-    getProfile(),
-    getPosts(50),
-    getArchive("top", 10),
+    safe(getPublication(), null),
+    safe(getProfile(), null),
+    safe(getPosts(50), []),
+    safe(getArchive("top", 10), []),
   ]);
 
   const totalReactions = (posts ?? []).reduce((sum, p) =>

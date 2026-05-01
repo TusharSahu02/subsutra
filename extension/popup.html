@@ -9,20 +9,36 @@
     .pub { font-size: 13px; color: #a5a5a5; margin-bottom: 4px; }
     .pub strong { color: #fff; }
     .meta { font-size: 11px; color: #666; margin-bottom: 14px; }
-    button { width: 100%; padding: 10px; border: none; border-radius: 6px; font-size: 14px; font-weight: 600; cursor: pointer; background: #6366f1; color: #fff; }
-    button:hover { background: #4f46e5; }
+    button { width: 100%; padding: 10px; border: none; border-radius: 6px; font-size: 14px; font-weight: 600; cursor: pointer; }
     button:disabled { background: #333; color: #666; cursor: not-allowed; }
+    .btn-primary { background: #6366f1; color: #fff; }
+    .btn-primary:hover:not(:disabled) { background: #4f46e5; }
+    .btn-secondary { background: transparent; color: #666; font-size: 11px; margin-top: 8px; border: 1px solid #333; }
+    .btn-secondary:hover { color: #aaa; border-color: #555; }
     #status { margin-top: 12px; font-size: 11px; min-height: 16px; word-break: break-all; max-height: 80px; overflow-y: auto; }
     .ok { color: #22c55e; } .err { color: #ef4444; } .info { color: #999; }
     .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; }
     .dot.green { background: #22c55e; } .dot.red { background: #ef4444; } .dot.yellow { background: #eab308; }
+    .hidden { display: none; }
   </style>
 </head>
 <body>
   <h1>🔮 SubSutra</h1>
-  <div id="pub" class="pub">Checking connection…</div>
-  <div id="meta" class="meta"></div>
-  <button id="relay" disabled>Sync Cookies Now</button>
+
+  <!-- State: Not connected -->
+  <div id="auth-view">
+    <p class="pub" style="margin-bottom:12px">Connect your Substack to get analytics.</p>
+    <button id="connect" class="btn-primary">Connect with Google</button>
+  </div>
+
+  <!-- State: Connected -->
+  <div id="connected-view" class="hidden">
+    <div id="pub" class="pub"></div>
+    <div id="meta" class="meta"></div>
+    <button id="relay" class="btn-primary">Sync Now</button>
+    <button id="disconnect" class="btn-secondary">Disconnect</button>
+  </div>
+
   <div id="status" class="info"></div>
   <script src="popup.js"></script>
 </body>

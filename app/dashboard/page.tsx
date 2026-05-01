@@ -6,7 +6,7 @@ import { PostsTable } from "@/components/posts-table"
 import { SectionCards } from "@/components/section-cards"
 import { SiteHeader } from "@/components/site-header"
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
-import { getDashboardData } from "@/lib/substack"
+import { getDashboardData, type DashboardData } from "@/lib/substack"
 
 export default async function Page() {
   const session = await auth()
@@ -18,7 +18,10 @@ export default async function Page() {
     avatar: session.user.image ?? "",
   }
 
-  const dashboard = await getDashboardData()
+  const dashboard = await getDashboardData().catch(() => ({
+    publication: null, profile: null, posts: [], topPosts: [],
+    stats: { totalPosts: 0, totalReactions: 0, totalRestacks: 0, avgReactionsPerPost: 0, topPost: null, topPostReactions: 0, recentPosts: 0, paidPosts: 0 },
+  }))
 
   return (
     <SidebarProvider

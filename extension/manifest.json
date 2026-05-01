@@ -1,14 +1,15 @@
 {
   "manifest_version": 3,
   "name": "SubSutra — Substack Analytics",
-  "version": "0.2.0",
-  "description": "Connects your Substack to SubSutra for automated analytics.",
+  "version": "0.3.0",
+  "description": "One-click Substack analytics. Install → connect → done.",
   "permissions": [
     "cookies",
     "storage",
     "scripting",
     "tabs",
-    "alarms"
+    "alarms",
+    "identity"
   ],
   "host_permissions": [
     "https://*.substack.com/*",
