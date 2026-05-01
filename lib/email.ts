@@ -1,12 +1,19 @@
 import { Resend } from "resend";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
-const FROM = process.env.EMAIL_FROM ?? "SubSutra <noreply@subsutra.com>";
+let _resend: Resend | null = null;
+function getResend() {
+  if (!_resend) {
+    if (!process.env.RESEND_API_KEY) throw new Error("RESEND_API_KEY not set");
+    _resend = new Resend(process.env.RESEND_API_KEY);
+  }
+  return _resend;
+}
+const FROM = process.env.EMAIL_FROM ?? "SubSutra <onboarding@resend.dev>";
 
 export async function sendCookieExpiryEmail(to: string, name: string | null) {
   const firstName = name?.split(" ")[0] ?? "there";
 
-  await resend.emails.send({
+  await getResend().emails.send({
     from: FROM,
     to,
     subject: "⚠️ SubSutra lost connection to your Substack",
